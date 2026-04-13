@@ -1,5 +1,7 @@
 # contains events shared across services
 
+# this should help with creating or validating events
+
 import time
 
 # defining schema for events
