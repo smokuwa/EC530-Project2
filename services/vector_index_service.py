@@ -3,3 +3,21 @@
 
 # PUB --> CLI/query service?
 # SUB --> embedding service
+
+import json
+from systems.broker_and_topics import get_redis
+
+r = get_redis()
+
+r.publish('test_run', json.dumps({
+    "type": "",
+        'path': "",
+        "event_id": "",
+        "payload":{
+            "image_id": "",
+            "path": "",
+            "source": "",
+            "timestamp": "",
+        }
+}))
+
