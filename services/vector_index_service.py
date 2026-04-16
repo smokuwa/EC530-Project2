@@ -5,7 +5,7 @@
 # SUB --> embedding service
 
 import json
-from systems.broker_and_topics import get_redis
+from systems.broker_and_topics import get_redis, TOPICS
 
 r = get_redis()
 

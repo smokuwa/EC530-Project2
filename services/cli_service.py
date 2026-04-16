@@ -4,7 +4,8 @@
 # PUB --> upload service
 # SUB --> vector index service (for getting info)
 
-from systems.broker_and_topics import get_redis
+# figure out how to MAKE RELATIVE PATH
+from systems.broker_and_topics import get_redis, TOPICS
 import json
 
 r = get_redis()

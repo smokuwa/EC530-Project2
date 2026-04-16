@@ -3,19 +3,54 @@
 
 # this should help with creating or validating events
 
-import time
+from systems.broker_and_topics import get_redis, TOPICS
 
-# defining schema for events
-# make functions async
-async def create_event():
+import json
+
+r = get_redis()
+
+def image_submitted(image_id:str, path:str):
     return {
-        "type": "",
-        'path': "",
-        "event_id": "",
-        "payload":{
-            "image_id": "",
-            "path": "",
-            "source": "",
-            "timestamp": time.time(),
-        }
+       "payload":{
+            "image_id": image_id,
+            "path": path,
+        } 
     }
+
+def inference_completed(image_id:str, path:str, labels:list[str], confidence:int):
+   return {
+       "payload":{
+            "image_id": image_id,
+            "path": path,
+            "labels": labels,
+            "confidence": confidence,
+        } 
+    }
+
+def annotation_stored(image_id:str, annotation_id:str, labels:list[str]):
+   return {
+       "payload":{
+            "image_id": image_id,
+            "annotion_id": annotation_id,
+            "labels": labels,
+        } 
+    }
+
+def embedding_created(image_id:str, path:str, embedding:list[int]):
+   return {
+       "payload":{
+            "image_id": image_id,
+            "path": path,
+            "embedding": embedding,
+        } 
+    }
+
+def annotation_corrected(image_id:str, annotation_id:int, corrected_labels:list[str]):
+   return {
+       "payload":{
+            "image_id": image_id,
+            "annotation_id": annotation_id,
+            "corrected_labels": corrected_labels,
+        } 
+    }
+

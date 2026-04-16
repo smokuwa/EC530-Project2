@@ -3,3 +3,5 @@
 # as of 4/14 we don't have an annotation_service.py, so document_db_service.py should store annotation data and also act as the annotation step within this flow
 # it should be inference service --> document db service --> embedding service
 # subscribes to inference.completed, publishes annotation.stored
+
+from systems.broker_and_topics import get_redis, TOPICS

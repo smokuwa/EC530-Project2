@@ -3,3 +3,5 @@
 
 # PUB --> vector index
 # SUB --> upload service
+
+from systems.broker_and_topics import get_redis, TOPICS
