@@ -36,7 +36,7 @@ def annotation_stored(image_id:str, annotation_id:str, labels:list[str]):
         } 
     }
 
-def embedding_created(image_id:str, path:str, embedding:list[int]):
+def embedding_created(image_id:str, path:str, embedding:list[float]):
    return {
        "payload":{
             "image_id": image_id,

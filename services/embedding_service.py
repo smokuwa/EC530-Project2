@@ -9,9 +9,12 @@ import json
 
 def handle_image_submitted(event):
     # logic surrounding image uploading event
-    return
+    r = get_redis()     
 
-def main():
+    # publishes info to topics
+    r.publish(TOPICS["EMBEDDING_CREATED"], json.dumps(event))
+    print(f"Published embedding.created")
+
     # where subscription logic will take place (??)
     r = get_redis()
     pubsub = r.pubsub(ignore_subscribe_messages=True)
@@ -22,6 +25,20 @@ def main():
     for message in pubsub.listen():
         event = json.loads(message["data"])
         print("Embedding service received:", event)
+
+
+def main():
+    # event = embedding_created() # will have info needed to get payload
+    # for now, fake data
+    event = {
+            "type": "embedding.created",
+            "payload": {
+                "image_id": "img_1",
+                "path": "/tmp/dog.jpg"
+            }
+        }
+    handle_image_submitted(event)
+
 
 if __name__ == "__main__":
     main()
