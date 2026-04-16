@@ -4,3 +4,12 @@
 # image processing
 
 from systems.broker_and_topics import get_redis, TOPICS
+from shared.events import inference_completed
+
+def handle_image_submitted(event):
+    # logic for publishing
+    return
+
+def main():
+    # subscription logic
+    return

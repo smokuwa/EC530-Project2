@@ -7,6 +7,14 @@
 import json
 from systems.broker_and_topics import get_redis, TOPICS
 
+def handle_embedding(event):
+    # logic to store embeddings
+    return
+
+def main():
+    # logic for subscribing to embedding
+    return
+
 r = get_redis()
 
 r.publish('test_run', json.dumps({

@@ -11,7 +11,7 @@ r = get_redis()
 
 def image_submitted(image_id:str, path:str):
     return {
-       "payload":{
+       "image.submitted":{
             "image_id": image_id,
             "path": path,
         } 
@@ -19,7 +19,7 @@ def image_submitted(image_id:str, path:str):
 
 def inference_completed(image_id:str, path:str, labels:list[str], confidence:int):
    return {
-       "payload":{
+       "inference.completed":{
             "image_id": image_id,
             "path": path,
             "labels": labels,
@@ -29,7 +29,7 @@ def inference_completed(image_id:str, path:str, labels:list[str], confidence:int
 
 def annotation_stored(image_id:str, annotation_id:str, labels:list[str]):
    return {
-       "payload":{
+       "annotation.stored":{
             "image_id": image_id,
             "annotion_id": annotation_id,
             "labels": labels,

@@ -5,3 +5,15 @@
 # subscribes to inference.completed, publishes annotation.stored
 
 from systems.broker_and_topics import get_redis, TOPICS
+
+def handle_inference(event):
+    # logic surrounding stoprring and publishing the annotation
+    return
+
+def handle_annotation_correction(event):
+    # logic surrounding annotation updates
+    return
+
+def main():
+    # where subscription logic will take place (??)
+    return
