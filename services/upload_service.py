@@ -25,7 +25,7 @@ def validate_event(event):
         raise ValueError("Missing payload field: path")
     
 # we want to build a properly formatted event that will represent a new image that will enter the system
-def build_image_submitted_event(image_path, source="cli"):
+def build_image_submitted_event(image_path):
     """
     Build a standard image.submitted event.
     """
@@ -44,8 +44,7 @@ def build_image_submitted_event(image_path, source="cli"):
         "payload": {
             "image_id": image_id,
             "path": image_path,
-            # where the image came from, usually cli
-            "source": source
+
         }
     }
     return event
