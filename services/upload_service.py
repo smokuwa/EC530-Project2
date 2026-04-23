@@ -4,7 +4,6 @@
 
 from systems.broker_and_topics import get_redis, TOPICS
 import json
-import uuid
 from datetime import datetime, timezone
 
 # validation exists so that bad events cannot crash the systen, so we throw an error if it's a bad event
