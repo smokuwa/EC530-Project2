@@ -7,10 +7,8 @@ from systems.broker_and_topics import get_redis, TOPICS
 import json
 from datetime import datetime, timezone
 
-
+# we want to handle the image submitted event
 def handle_image_submitted(event):
-    r = get_redis()
-
     processed_result = {
         "image_id": event["payload"]["image_id"],
         "path": event["payload"]["path"],
@@ -22,18 +20,17 @@ def handle_image_submitted(event):
     completed_event = {
         "type": "publish",
         "topic": TOPICS["INFERENCE_COMPLETED"],
-        "event_id": f"evt_{r.incr('event_id_counter')}",
+        "event_id": f"evt_{get_redis().incr('event_id_counter')}",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "payload": processed_result
     }
 
-    r.publish(TOPICS["INFERENCE_COMPLETED"], json.dumps(completed_event))
+    get_redis().publish(TOPICS["INFERENCE_COMPLETED"], json.dumps(completed_event))
     print("Published inference.completed")
 
 
 def main():
-    r = get_redis()
-    pubsub = r.pubsub(ignore_subscribe_messages=True)
+    pubsub = get_redis.pubsub(ignore_subscribe_messages=True)
 
     pubsub.subscribe(TOPICS["IMAGE_SUBMITTED"])
     print("Inference service listening...")
