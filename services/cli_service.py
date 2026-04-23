@@ -18,35 +18,35 @@ def handle_correction(event):
     return event
 
 def main():
-    r = get_redis()
-    #event = image_submitted() # will have info needed to get payload
+    # r = get_redis()
+    # #event = image_submitted() # will have info needed to get payload
 
-    # for now, fake data
-    event = {
-            "type": "image.submitted",
-            "payload": {
-                "image_id": "img_1",
-                "path": "/tmp/dog.jpg"
-            }
-        }
+    # # for now, fake data
+    # event = {
+    #         "type": "image.submitted",
+    #         "payload": {
+    #             "image_id": "img_1",
+    #             "path": "/tmp/dog.jpg"
+    #         }
+    #     }
 
-    # publishes info to topics
-    r.publish(TOPICS["IMAGE_SUBMITTED"], json.dumps(event))
-    print(f"Published image.submitted")
+    # # publishes info to topics
+    # r.publish(TOPICS["IMAGE_SUBMITTED"], json.dumps(event))
+    # print(f"Published image.submitted")
 
     # start of connecting the CLI
     
-    # while True:
-    #     user_input = input("Please enter a respective command: ")
-    #     if user_input == "upload":
-    #         handle_image(user_input)
-    #     elif user_input == "correction":
-    #         handle_correction(user_input)
-    #     elif user_input == "exit":
-    #         print("GOODBYE")
-    #         break
-    #     else:
-    #         print("Invalid entry, please enter a valid command")
+    while True:
+        user_input = input("Please enter a respective command: ")
+        if user_input == "upload":
+            handle_image(user_input)
+        elif user_input == "correction":
+            handle_correction(user_input)
+        elif user_input == "exit":
+            print("GOODBYE")
+            break
+        else:
+            print("Invalid entry, please enter a valid command")
 
 if __name__ == "__main__":
     main()

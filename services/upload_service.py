@@ -34,8 +34,8 @@ def build_image_submitted_event(image_path, source="cli"):
     event_id = f"evt_{get_redis().incr('event_id_counter')}"
     # build the proper event format
     event = {
-        # send the event into the system
-        "type": "publish",
+        # identify the event for downstream consumers
+        "type": "image.submitted",
         # submit which topic the event goes to
         "topic": TOPICS["IMAGE_SUBMITTED"],
         "event_id": event_id,
@@ -52,13 +52,13 @@ def build_image_submitted_event(image_path, source="cli"):
 
 # the main function that the cli wil call when a user uploads an image
 # should connect to redis, build a image.submitted event, validate that event, publish it to the redis topic, then return the event
-def handle_upload(image_path, source="cli"):
+def handle_upload(image_path):
     """
     Entry point used by the CLI.
     Creates the event, validates it, and publishes it to Redis.
     """
     # create the event using the build_event function every time this handle_upload function is called
-    event = build_image_submitted_event(image_path, source)
+    event = build_image_submitted_event(image_path)
     # validate that event and ensure its not messed up before we publush it
     validate_event(event)
     # publish the event into redis. give the string image.submitted and convert the python dictionary into a json string since redis publishes strings
