@@ -25,7 +25,7 @@ def validate_event(event):
         raise ValueError("Missing payload field: path")
     
 # we want to build a properly formatted event that will represent a new image that will enter the system
-def build_image_submitted_event(image_path, source="cli"):
+def build_image_submitted_event(image_path):
     """
     Build a standard image.submitted event.
     """
@@ -44,21 +44,20 @@ def build_image_submitted_event(image_path, source="cli"):
         "payload": {
             "image_id": image_id,
             "path": image_path,
-            # where the image came from, usually cli
-            "source": source
+
         }
     }
     return event
 
 # the main function that the cli wil call when a user uploads an image
 # should connect to redis, build a image.submitted event, validate that event, publish it to the redis topic, then return the event
-def handle_upload(image_path, source="cli"):
+def handle_upload(image_path):
     """
     Entry point used by the CLI.
     Creates the event, validates it, and publishes it to Redis.
     """
     # create the event using the build_event function every time this handle_upload function is called
-    event = build_image_submitted_event(image_path, source)
+    event = build_image_submitted_event(image_path)
     # validate that event and ensure its not messed up before we publush it
     validate_event(event)
     # publish the event into redis. give the string image.submitted and convert the python dictionary into a json string since redis publishes strings
