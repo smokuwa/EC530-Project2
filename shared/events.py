@@ -1,56 +1,97 @@
-# contains events shared across services
-# has all the functions that are at the bottom of class slides, import to respective modules
+import time
+import uuid
 
-# this should help with creating or validating events
+from systems.broker_and_topics import TOPICS
 
-from systems.broker_and_topics import get_redis, TOPICS
 
-import json
+EVENT_TOPICS = {
+    "image.submitted": TOPICS["IMAGE_SUBMITTED"],
+    "inference.completed": TOPICS["INFERENCE_COMPLETED"],
+    "annotation.stored": TOPICS["ANNOTATION_STORED"],
+    "embedding.created": TOPICS["EMBEDDING_CREATED"],
+    "annotation.corrected": TOPICS["ANNOTATION_CORRECTED"],
+}
 
-r = get_redis()
 
-def image_submitted(image_id:str, path:str):
+def make_event(event_type: str, payload: dict) -> dict:
     return {
-       "image.submitted":{
-            "image_id": image_id,
-            "path": path,
-        } 
+        "type": event_type,
+        "topic": EVENT_TOPICS[event_type],
+        "event_id": str(uuid.uuid4()),
+        "timestamp": time.time(),
+        "payload": payload,
     }
 
-def inference_completed(image_id:str, path:str, labels:list[str], confidence:int):
-   return {
-       "inference.completed":{
+
+def image_submitted(image_id: str, path: str) -> dict:
+    return make_event(
+        "image.submitted",
+        {
+            "image_id": image_id,
+            "path": path,
+        },
+    )
+
+
+def inference_completed(
+    image_id: str,
+    path: str,
+    labels: list[str],
+    confidence: float,
+) -> dict:
+    return make_event(
+        "inference.completed",
+        {
             "image_id": image_id,
             "path": path,
             "labels": labels,
             "confidence": confidence,
-        } 
-    }
+        },
+    )
 
-def annotation_stored(image_id:str, annotation_id:str, labels:list[str]):
-   return {
-       "annotation.stored":{
+
+def annotation_stored(
+    image_id: str,
+    path: str,
+    annotation_id: str,
+    labels: list[str],
+) -> dict:
+    return make_event(
+        "annotation.stored",
+        {
             "image_id": image_id,
-            "annotion_id": annotation_id,
+            "path": path,
+            "annotation_id": annotation_id,
             "labels": labels,
-        } 
-    }
+        },
+    )
 
-def embedding_created(image_id:str, path:str, embedding:list[float]):
-   return {
-       "payload":{
+
+def embedding_created(
+    image_id: str,
+    path: str,
+    embedding: list[float],
+) -> dict:
+    return make_event(
+        "embedding.created",
+        {
             "image_id": image_id,
             "path": path,
             "embedding": embedding,
-        } 
-    }
+        },
+    )
 
-def annotation_corrected(image_id:str, annotation_id:int, corrected_labels:list[str]):
-   return {
-       "payload":{
+
+def annotation_corrected(
+    image_id: str,
+    annotation_id: str,
+    corrected_labels: list[str],
+) -> dict:
+    return make_event(
+        "annotation.corrected",
+        {
             "image_id": image_id,
             "annotation_id": annotation_id,
             "corrected_labels": corrected_labels,
-        } 
-    }
-
+        },
+    )
