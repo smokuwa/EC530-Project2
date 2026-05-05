@@ -1,10 +1,33 @@
-# upload service will be the entry point for new images
-# it should accept an upload request from cli.py, assign the image its own id, create the image.submitted event, then send that event to redis.
-# should connect to broker_and_topics.py to publish the event, connect to events.py to validate, and connect to cli.py to call the upload_service
-
-from systems.broker_and_topics import get_redis, TOPICS
 import json
-from datetime import datetime, timezone
+from pathlib import Path
+
+from shared.events import image_submitted
+from systems.broker_and_topics import TOPICS, get_redis
+
+
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
+
+
+def validate_image_path(image_path, require_exists=True):
+    """
+    Validate the user-provided image path and return a normalized path string.
+    """
+    if not isinstance(image_path, str) or not image_path.strip():
+        raise ValueError("Image path must be a non-empty string")
+
+    path = Path(image_path).expanduser()
+    if path.suffix.lower() not in ALLOWED_IMAGE_EXTENSIONS:
+        raise ValueError("Image path must point to a supported image file")
+
+    if require_exists:
+        if not path.exists():
+            raise FileNotFoundError(f"Image file does not exist: {image_path}")
+        if not path.is_file():
+            raise ValueError(f"Image path is not a file: {image_path}")
+        return str(path.resolve())
+
+    return str(path)
+
 
 # validation exists so that bad events cannot crash the systen, so we throw an error if it's a bad event
 def validate_event(event):
@@ -17,6 +40,11 @@ def validate_event(event):
         if field not in event:
             # throw an error if a specific field is not in the event
             raise ValueError(f"Missing required field: {field}")
+
+    if event["type"] != "image.submitted":
+        raise ValueError("Invalid event type for upload service")
+    if event["topic"] != TOPICS["IMAGE_SUBMITTED"]:
+        raise ValueError("Invalid topic for upload service")
     if "image_id" not in event["payload"]:
         # throw an error if the payload does not contain an image_id
         raise ValueError("Missing payload field: image_id")
@@ -25,42 +53,28 @@ def validate_event(event):
         raise ValueError("Missing payload field: path")
     
 # we want to build a properly formatted event that will represent a new image that will enter the system
-def build_image_submitted_event(image_path):
+def build_image_submitted_event(image_path, redis_client=None):
     """
     Build a standard image.submitted event.
     """
-    # generate a random unique ID using redis
-    image_id = f"img_{get_redis().incr('image_id_counter')}"
-    event_id = f"evt_{get_redis().incr('event_id_counter')}"
-    # build the proper event format
-    event = {
-        # identify the event for downstream consumers
-        "type": "image.submitted",
-        # submit which topic the event goes to
-        "topic": TOPICS["IMAGE_SUBMITTED"],
-        "event_id": event_id,
-        # time the event was created and convert it to string
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "payload": {
-            "image_id": image_id,
-            "path": image_path,
-
-        }
-    }
-    return event
+    redis_client = redis_client or get_redis()
+    image_id = f"img_{redis_client.incr('image_id_counter')}"
+    return image_submitted(image_id=image_id, path=image_path)
 
 # the main function that the cli wil call when a user uploads an image
 # should connect to redis, build a image.submitted event, validate that event, publish it to the redis topic, then return the event
-def handle_upload(image_path):
+def handle_upload(image_path, require_exists=True):
     """
     Entry point used by the CLI.
     Creates the event, validates it, and publishes it to Redis.
     """
+    normalized_path = validate_image_path(image_path, require_exists=require_exists)
+    redis_client = get_redis()
     # create the event using the build_event function every time this handle_upload function is called
-    event = build_image_submitted_event(image_path)
+    event = build_image_submitted_event(normalized_path, redis_client=redis_client)
     # validate that event and ensure its not messed up before we publush it
     validate_event(event)
     # publish the event into redis. give the string image.submitted and convert the python dictionary into a json string since redis publishes strings
-    get_redis().publish(TOPICS["IMAGE_SUBMITTED"], json.dumps(event))
+    redis_client.publish(TOPICS["IMAGE_SUBMITTED"], json.dumps(event))
     print(f"Published {TOPICS['IMAGE_SUBMITTED']} for {event['payload']['image_id']}")
     return event
