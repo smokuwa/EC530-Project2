@@ -7,16 +7,18 @@
 # figure out how to MAKE RELATIVE PATH
 from services.upload_service import handle_upload
 
-def handle_image(event):
+def handle_image():
     image_path = input("Enter image path: ").strip()
+
     try:
         event = handle_upload(image_path)
         image_id = event["payload"]["image_id"]
-        print("Upload accepted. Image ID: " + image_id)
+        print(f"Upload accepted. Image ID: {image_id}")
+        return event
     except FileNotFoundError:
-        print("File not Found")
+        print("Upload failed: I could not find that file.")
     except ValueError:
-        print("Invalid upload")
+        print("Upload failed: please enter a valid image file path.")
     
 
 def handle_correction(event):
@@ -35,9 +37,9 @@ def main():
     print("\nWELCOME TO OUR PROGRAM!\n")
     print(main_prompt)
     while True:
-        user_input = input("Please enter a command: ")
+        user_input = input("Please enter a command: ").strip().lower()
         if user_input == "upload":
-            handle_image(user_input)
+            handle_image()
         elif user_input == "annotate":
             handle_correction(user_input)
         elif user_input == "help":
