@@ -54,7 +54,7 @@ def annotation_stored(
     image_id: str,
     path: str,
     annotation_id: str,
-    labels: list[str],
+    objects: list[dict],
 ) -> dict:
     return make_event(
         "annotation.stored",
@@ -62,7 +62,7 @@ def annotation_stored(
             "image_id": image_id,
             "path": path,
             "annotation_id": annotation_id,
-            "labels": labels,
+            "objects": objects,
         },
     )
 
