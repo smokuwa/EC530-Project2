@@ -5,7 +5,10 @@
 # SUB --> vector index service (for getting info)
 
 # figure out how to MAKE RELATIVE PATH
+import json
 from services.upload_service import handle_upload
+from systems.broker_and_topics import get_redis, TOPICS
+from shared.events import annotation_corrected
 
 def handle_image():
     image_path = input("Enter image path: ").strip()
@@ -19,9 +22,25 @@ def handle_image():
     except ValueError:
         print("Upload failed: please enter a valid image file path.")
     
-
-def handle_correction(event):
-    # add logic for when user enters annotation 
+# logic for when user enters annotation
+def handle_correction():
+    image_id = input("Enter image ID to correct: ").strip()
+    annotation_id = f"ann_{image_id}"
+    label = input("Enter corrected object label: ").strip()
+    corrected_object = {
+        "label": label,
+        "bbox": [0, 0, 100, 100],
+        "conf": 1.0,
+        "source": "manual_correction"
+    }
+    event = annotation_corrected(
+        image_id=image_id,
+        annotation_id=annotation_id,
+        objects=[corrected_object]
+    )
+    r = get_redis()
+    r.publish(TOPICS["ANNOTATION_CORRECTED"], json.dumps(event))
+    print(f"Published annotation.corrected for {image_id}")
     return event
 
 main_prompt = """COMMANDS: 
@@ -40,7 +59,7 @@ def main():
         if user_input == "upload":
             handle_image()
         elif user_input == "annotate":
-            handle_correction(user_input)
+            handle_correction()
         elif user_input == "help":
             print(main_prompt)
         elif user_input == "exit":
