@@ -54,6 +54,8 @@ def list_images():
             {
                 "image_id": image_id,
                 "path": image["path"],
+                "has_annotation": image_id in database["annotations"],
+                "has_vector": image_id in database["vectors"],
             }
         )
 

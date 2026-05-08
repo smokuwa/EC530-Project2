@@ -103,3 +103,33 @@ def test_handle_correction_rejects_missing_image(mock_input, mock_get_image, moc
     assert event is None
     mock_redis.publish.assert_not_called()
     assert "Annotation failed: that image does not exist yet." in capsys.readouterr().out
+
+
+@patch("services.cli_service.get_vector", return_value={"embedding": [0.25, 0.5, 0.75]})
+@patch(
+    "services.cli_service.get_annotation_by_image",
+    return_value={"objects": [{"label": "dog"}], "status": "stored"},
+)
+@patch(
+    "services.cli_service.list_images",
+    return_value=[
+        {
+            "image_id": "img_1",
+            "path": "data/dog.jpeg",
+            "has_annotation": True,
+            "has_vector": True,
+        }
+    ],
+)
+def test_handle_list_prints_stored_image_statuses(
+    mock_list_images,
+    mock_get_annotation_by_image,
+    mock_get_vector,
+    capsys,
+):
+    results = cli_service.handle_list()
+
+    assert results[0]["image_id"] == "img_1"
+    assert results[0]["has_annotation"] is True
+    assert results[0]["has_vector"] is True
+    assert "img_1 | data/dog.jpeg | annotation: yes | vector: yes" in capsys.readouterr().out

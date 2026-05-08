@@ -1,6 +1,7 @@
-from systems.broker_and_topics import get_redis, TOPICS
 import json
-from datetime import datetime, timezone
+
+from shared.events import inference_completed
+from systems.broker_and_topics import get_redis, TOPICS
 
 # validate the image again
 def validate_image_submitted_event(event):
@@ -30,15 +31,13 @@ def simulate_inference(payload):
 
 # takes the processed image result and wraps it into a proper inference.completed event so it can be sent to the next service
 def build_inference_completed_event(processed_result, original_event_id):
-    r = get_redis()
-    event = {
-        "type": "publish",
-        "topic": TOPICS["INFERENCE_COMPLETED"],
-        "event_id": f"evt_{r.incr('event_id_counter')}",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "payload": processed_result,
-        "parent_event_id": original_event_id
-    }
+    event = inference_completed(
+        image_id=processed_result["image_id"],
+        path=processed_result["path"],
+        objects=processed_result["objects"],
+        model_version=processed_result["model_version"],
+    )
+    event["parent_event_id"] = original_event_id
     return event
 
 # this takes an uploaded-image event and turns it into a processed-image event.

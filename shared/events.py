@@ -36,16 +36,16 @@ def image_submitted(image_id: str, path: str) -> dict:
 def inference_completed(
     image_id: str,
     path: str,
-    labels: list[str],
-    confidence: float,
+    objects: list[dict],
+    model_version: str,
 ) -> dict:
     return make_event(
         "inference.completed",
         {
             "image_id": image_id,
             "path": path,
-            "labels": labels,
-            "confidence": confidence,
+            "objects": objects,
+            "model_version": model_version,
         },
     )
 
