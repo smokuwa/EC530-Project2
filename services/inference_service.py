@@ -1,8 +1,7 @@
 import json
 
 from systems.broker_and_topics import get_redis, TOPICS
-import json
-from datetime import datetime, timezone
+from shared.events import inference_completed
 
 # validate the image again
 def validate_image_submitted_event(event):
