@@ -8,7 +8,6 @@ import json
 from systems.broker_and_topics import get_redis, TOPICS
 
 # function to validate event structure
-
 def validate_event(event):
     required_top_level = ["type", "topic", "event_id", "timestamp", "payload"]
     for field in required_top_level:
@@ -20,7 +19,7 @@ def validate_event(event):
         if field not in payload:
             raise ValueError(f"Missing payload field: {field}")
 
-
+# creates the embedding.created event and stores the embedding vector in redis
 def handle_embedding(event):
     validate_event(event)
     image_id = event["payload"]["image_id"]
@@ -33,16 +32,16 @@ def listen():
     pubsub = r.pubsub(ignore_subscribe_messages=True)
     pubsub.subscribe(TOPICS["EMBEDDING_CREATED"])
     print("Vector service listening...")
-
     for message in pubsub.listen():
-        event = json.loads(message["data"])
-        print("Vector service received:", event)
-        handle_embedding(event)
-
+        try:
+            event = json.loads(message["data"])
+            print("Vector index service received:", event)
+            handle_embedding(event)
+        except Exception as e:
+            print(f"Vector index service error: {e}")
 
 def main():
     listen()
-
 
 if __name__ == "__main__":
     main()
