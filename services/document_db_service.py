@@ -36,21 +36,37 @@ def handle_inference(event):
         f"for {stored_event['payload']['image_id']}"
     )
 
-# this is a placeholder for later correction logic 
+# processes a manual correction to an annotation
 def handle_annotation_correction(event):
-    print("Annotation correction is not implemented yet.")
+    payload = event["payload"]
+    annotation_id = payload["annotation_id"]
+    image_id = payload["image_id"]
+    objects = payload["objects"]
+    corrected_document = {
+        "image_id": image_id,
+        "annotation_id": annotation_id,
+        "objects": objects,
+        "status": "corrected"
+    }
+    r = get_redis()
+    r.set(f"annotation:{annotation_id}", json.dumps(corrected_document))
+    print(f"Updated annotation for {image_id}")
 
-# subscribe to inference.completed events
+# subscribe to inference.completed and annotated.completed events
 def listen():
     r = get_redis()
     pubsub = r.pubsub(ignore_subscribe_messages=True)
-    pubsub.subscribe(TOPICS["INFERENCE_COMPLETED"])
+    pubsub.subscribe(TOPICS["INFERENCE_COMPLETED"],TOPICS["ANNOTATION_CORRECTED"])
     print("Document DB service listening...")
     for message in pubsub.listen():
         try:
             event = json.loads(message["data"])
+            topic = message["channel"].decode()
             print("Document DB service received:", event)
-            handle_inference(event)
+            if topic == TOPICS["INFERENCE_COMPLETED"]:
+                handle_inference(event)
+            elif topic == TOPICS["ANNOTATION_CORRECTED"]:
+                handle_annotation_correction(event)
         except Exception as e:
             print(f"Document DB service error: {e}")
 
