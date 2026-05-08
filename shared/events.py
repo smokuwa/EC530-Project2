@@ -85,13 +85,13 @@ def embedding_created(
 def annotation_corrected(
     image_id: str,
     annotation_id: str,
-    corrected_labels: list[str],
+    objects: list[dict]
 ) -> dict:
     return make_event(
         "annotation.corrected",
         {
             "image_id": image_id,
             "annotation_id": annotation_id,
-            "corrected_labels": corrected_labels,
+            "objects": objects,
         },
     )
