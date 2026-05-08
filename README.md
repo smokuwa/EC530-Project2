@@ -17,3 +17,24 @@ Our project implements a command-line interface system that allows users to:
 2. Annotate the uploaded image (not yet fully implemented as of 05/08/2026)
 3. Repeat the prompt again
 4. Safety exit the system
+
+## System Architecture
+
+```text
+CLI
+ ↓
+upload_service
+ publishes image.submitted
+ ↓
+inference_service
+ publishes inference.completed
+ ↓
+document_db_service
+ stores annotation
+ publishes annotation.stored
+ ↓
+embedding_service
+ publishes embedding.created
+ ↓
+vector_index_service
+ stores vector:<image_id>
