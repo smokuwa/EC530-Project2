@@ -61,7 +61,7 @@ def listen():
     for message in pubsub.listen():
         try:
             event = json.loads(message["data"])
-            topic = message["channel"].decode()
+            topic = message["channel"]
             print("Document DB service received:", event)
             if topic == TOPICS["INFERENCE_COMPLETED"]:
                 handle_inference(event)
