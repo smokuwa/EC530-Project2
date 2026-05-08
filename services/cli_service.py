@@ -43,9 +43,51 @@ def handle_correction():
     print(f"Published annotation.corrected for {image_id}")
     return event
 
+
+def handle_query():
+    # fix so it can look at existing data
+    image_id = input("Enter image ID to query: ").strip()
+    if not image_id:
+        print("Query failed: please enter an image ID.")
+        return None
+
+    r = get_redis()
+    annotation_data = r.get(f"annotation:ann_{image_id}")
+    vector_data = r.get(f"vector:{image_id}")
+
+    if annotation_data is None and vector_data is None:
+        print(f"No results found for {image_id}.")
+        return None
+
+    annotation = json.loads(annotation_data) if annotation_data else None
+    vector = json.loads(vector_data) if vector_data else None
+
+    print(f"Results for {image_id}:")
+    if annotation:
+        annotation_payload = annotation.get("payload", annotation)
+        path = annotation_payload.get("path")
+        objects = annotation_payload.get("objects", [])
+        if path:
+            print(f"Image path: {path}")
+        if objects:
+            labels = [obj.get("label", "unknown") for obj in objects]
+            print("Labels: " + ", ".join(labels))
+
+    if vector:
+        embedding = vector.get("embedding", [])
+        print(f"Embedding: {embedding}")
+
+    return {
+        "annotation": annotation,
+        "vector": vector,
+    }
+
+
 main_prompt = """COMMANDS: 
                 upload --> use to upload an image
                 annotate --> use to annotate uploaded image
+                list --> allows you to see stored images
+                query --> use to look up an uploaded image
                 help --> use to view this prompt once more
                 exit --> use to exit program
               """
@@ -60,6 +102,11 @@ def main():
             handle_image()
         elif user_input == "annotate":
             handle_correction()
+        elif user_input == "list":
+            # placeholder till we have logic to list current data
+            return
+        elif user_input == "query":
+            handle_query()
         elif user_input == "help":
             print(main_prompt)
         elif user_input == "exit":
