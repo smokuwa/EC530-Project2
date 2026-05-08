@@ -1,7 +1,6 @@
-import json
-
 from systems.broker_and_topics import get_redis, TOPICS
-from shared.events import inference_completed
+import json
+from datetime import datetime, timezone
 
 # validate the image again
 def validate_image_submitted_event(event):
@@ -42,10 +41,15 @@ def build_inference_completed_event(processed_result, original_event_id):
     }
     return event
 
+# this takes an uploaded-image event and turns it into a processed-image event.
+# recieve image --> process image --> send processed result ahead
 def process_image_submitted_event(event):
     r = get_redis()
+    # validate it again to make sure no bad events go through
     validate_image_submitted_event(event)
+    # send the payload into the fake image-processing function
     processed_result = simulate_inference(event["payload"])
+    # build the outgoing event
     completed_event = build_inference_completed_event(
         processed_result,
         event["event_id"]
@@ -53,6 +57,7 @@ def process_image_submitted_event(event):
     r.publish(TOPICS["INFERENCE_COMPLETED"], json.dumps(completed_event))
     print(f"Published {TOPICS['INFERENCE_COMPLETED']} for {processed_result['image_id']}")
 
+# this constantly listens for new image.submitted events from redis, and then processes them once they arrive
 def listen_for_uploaded_images():
     r = get_redis()
     pubsub = r.pubsub(ignore_subscribe_messages=True)
