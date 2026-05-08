@@ -6,6 +6,7 @@
 
 import json
 from systems.broker_and_topics import get_redis, TOPICS
+from systems.database import save_vector
 
 # function to validate event structure
 def validate_event(event):
@@ -22,8 +23,13 @@ def validate_event(event):
 # creates the embedding.created event and stores the embedding vector in redis
 def handle_embedding(event):
     validate_event(event)
-    image_id = event["payload"]["image_id"]
-    get_redis().set(f"vector:{image_id}", json.dumps(event["payload"]))
+    payload = event["payload"]
+    image_id = payload["image_id"]
+    save_vector(
+        image_id=image_id,
+        path=payload["path"],
+        embedding=payload["embedding"],
+    )
     print(f"Stored vector for {image_id}")
 
 # seperate function to subscribe to necessary event

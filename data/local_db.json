@@ -1,0 +1,10 @@
+{
+  "images": {
+    "img_test": {
+      "image_id": "img_test",
+      "path": "data/dog.jpeg"
+    }
+  },
+  "annotations": {},
+  "vectors": {}
+}

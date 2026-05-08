@@ -3,6 +3,7 @@ from pathlib import Path
 
 from shared.events import image_submitted
 from systems.broker_and_topics import TOPICS, get_redis
+from systems.database import save_image
 
 
 ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
@@ -74,6 +75,7 @@ def handle_upload(image_path, require_exists=True):
     event = build_image_submitted_event(normalized_path, redis_client=redis_client)
     # validate that event and ensure its not messed up before we publush it
     validate_event(event)
+    save_image(event["payload"]["image_id"], event["payload"]["path"])
     # publish the event into redis. give the string image.submitted and convert the python dictionary into a json string since redis publishes strings
     redis_client.publish(TOPICS["IMAGE_SUBMITTED"], json.dumps(event))
     print(f"Published {TOPICS['IMAGE_SUBMITTED']} for {event['payload']['image_id']}")

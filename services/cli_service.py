@@ -8,6 +8,7 @@
 import json
 from services.upload_service import handle_upload
 from systems.broker_and_topics import get_redis, TOPICS
+from systems.database import get_annotation_by_image, get_image, get_vector, list_images
 from shared.events import annotation_corrected
 
 def handle_image():
@@ -27,6 +28,16 @@ def handle_correction():
     image_id = input("Enter image ID to correct: ").strip()
     annotation_id = f"ann_{image_id}"
     label = input("Enter corrected object label: ").strip()
+    r = get_redis()
+
+    if not image_id or not label:
+        print("Annotation failed: please enter an image ID and label.")
+        return None
+
+    if get_image(image_id) is None:
+        print("Annotation failed: that image does not exist yet.")
+        return None
+
     corrected_object = {
         "label": label,
         "bbox": [0, 0, 100, 100],
@@ -38,7 +49,6 @@ def handle_correction():
         annotation_id=annotation_id,
         objects=[corrected_object]
     )
-    r = get_redis()
     r.publish(TOPICS["ANNOTATION_CORRECTED"], json.dumps(event))
     print(f"Published annotation.corrected for {image_id}")
     return event
@@ -51,27 +61,24 @@ def handle_query():
         print("Query failed: please enter an image ID.")
         return None
 
-    r = get_redis()
-    annotation_data = r.get(f"annotation:ann_{image_id}")
-    vector_data = r.get(f"vector:{image_id}")
+    image = get_image(image_id)
+    annotation = get_annotation_by_image(image_id)
+    vector = get_vector(image_id)
 
-    if annotation_data is None and vector_data is None:
+    if image is None and annotation is None and vector is None:
         print(f"No results found for {image_id}.")
         return None
 
-    annotation = json.loads(annotation_data) if annotation_data else None
-    vector = json.loads(vector_data) if vector_data else None
-
     print(f"Results for {image_id}:")
+    if image:
+        print(f"Image path: {image['path']}")
+
     if annotation:
-        annotation_payload = annotation.get("payload", annotation)
-        path = annotation_payload.get("path")
-        objects = annotation_payload.get("objects", [])
-        if path:
-            print(f"Image path: {path}")
+        objects = annotation.get("objects", [])
         if objects:
             labels = [obj.get("label", "unknown") for obj in objects]
             print("Labels: " + ", ".join(labels))
+        print(f"Annotation status: {annotation['status']}")
 
     if vector:
         embedding = vector.get("embedding", [])
@@ -81,6 +88,47 @@ def handle_query():
         "annotation": annotation,
         "vector": vector,
     }
+
+
+def handle_list():
+    images = list_images()
+
+    if not images:
+        print("No uploaded images found.")
+        return []
+
+    print("Stored images:")
+    results = []
+    for image in images:
+        image_id = image["image_id"]
+        path = image["path"]
+        has_annotation = bool(image["has_annotation"])
+        has_vector = bool(image["has_vector"])
+        annotation = get_annotation_by_image(image_id)
+        vector = get_vector(image_id)
+        payload = {
+            "image_id": image_id,
+            "path": path,
+            "annotation": annotation,
+            "vector": vector,
+        }
+
+        annotation_status = "annotation: yes" if has_annotation else "annotation: no"
+        vector_status = "vector: yes" if has_vector else "vector: no"
+        print(f"- {image_id} | {path} | {annotation_status} | {vector_status}")
+        print(json.dumps(payload, indent=2))
+
+        results.append(
+            {
+                "image_id": image_id,
+                "path": path,
+                "has_annotation": has_annotation,
+                "has_vector": has_vector,
+                "payload": payload,
+            }
+        )
+
+    return results
 
 
 main_prompt = """COMMANDS: 
@@ -103,8 +151,7 @@ def main():
         elif user_input == "annotate":
             handle_correction()
         elif user_input == "list":
-            # placeholder till we have logic to list current data
-            return
+            handle_list()
         elif user_input == "query":
             handle_query()
         elif user_input == "help":

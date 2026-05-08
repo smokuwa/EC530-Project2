@@ -1,5 +1,6 @@
 import json
 from systems.broker_and_topics import get_redis, TOPICS
+from systems.database import get_image, save_annotation
 from shared.events import annotation_stored
 
 # validate again
@@ -29,7 +30,11 @@ def handle_inference(event):
     stored_event = build_annotation_stored_event(event)
     r = get_redis()
     annotation_id = stored_event["payload"]["annotation_id"]
-    r.set(f"annotation:{annotation_id}", json.dumps(stored_event))
+    save_annotation(
+        annotation_id=annotation_id,
+        image_id=stored_event["payload"]["image_id"],
+        objects=stored_event["payload"]["objects"],
+    )
     r.publish(TOPICS["ANNOTATION_STORED"], json.dumps(stored_event))
     print(
         f"Published {TOPICS['ANNOTATION_STORED']} "
@@ -42,14 +47,15 @@ def handle_annotation_correction(event):
     annotation_id = payload["annotation_id"]
     image_id = payload["image_id"]
     objects = payload["objects"]
-    corrected_document = {
-        "image_id": image_id,
-        "annotation_id": annotation_id,
-        "objects": objects,
-        "status": "corrected"
-    }
-    r = get_redis()
-    r.set(f"annotation:{annotation_id}", json.dumps(corrected_document))
+    if get_image(image_id) is None:
+        raise ValueError(f"Image does not exist: {image_id}")
+
+    save_annotation(
+        annotation_id=annotation_id,
+        image_id=image_id,
+        objects=objects,
+        status="corrected",
+    )
     print(f"Updated annotation for {image_id}")
 
 # subscribe to inference.completed and annotated.completed events
