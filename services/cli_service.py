@@ -9,7 +9,6 @@ from services.upload_service import handle_upload
 
 def handle_image():
     image_path = input("Enter image path: ").strip()
-
     try:
         event = handle_upload(image_path)
         image_id = event["payload"]["image_id"]
